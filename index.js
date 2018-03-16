@@ -5,7 +5,7 @@ const fetch   = require("node-fetch");
 
 function getMainTables(doc) {
   const table  = doc.querySelector("table table table:nth-child(2)");
-  const tbody  = table.querySelector("tbody:nth-child(1)");
+  const tbody  = table.querySelector("tbody");
   const tr     = tbody.querySelector("tr:nth-child(1)");
   const td     = tbody.querySelector("td:nth-child(1)");
   return td.children;
