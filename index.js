@@ -38,7 +38,7 @@ async function getRedirectedURL(url) {
 }
 
 async function getFeaturedUpdate(table) {
-  const innerTable = table.querySelector("td > div:nth-child(2) table table");
+  const innerTable = table.querySelector("td > div:nth-child(2) table table:nth-child(2)");
   const trs = innerTable.querySelectorAll("tr");
 
   const titleCell = trs.item(trs.length - 2).querySelector("td");
