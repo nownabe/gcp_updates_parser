@@ -3,11 +3,15 @@ const JSDOM   = require("jsdom").JSDOM;
 const parser  = require("mailparser").simpleParser;
 const fetch   = require("node-fetch");
 
+function handleError(err) {
+  console.error(err);
+}
+
 function getMainTables(doc) {
-  const table  = doc.querySelector("table table table:nth-child(2)");
+  const table  = doc.querySelector("table table table:nth-child(2) table");
   const tbody  = table.querySelector("tbody");
-  const tr     = tbody.querySelector("tr:nth-child(1)");
-  const td     = tbody.querySelector("td:nth-child(1)");
+  const tr     = tbody.querySelector("tr");
+  const td     = tbody.querySelector("td");
   return td.children;
 }
 
@@ -38,7 +42,7 @@ async function getRedirectedURL(url) {
 }
 
 async function getFeaturedUpdate(table) {
-  const innerTable = table.querySelector("td > div:nth-child(2) table table:nth-child(2)");
+  const innerTable = table.querySelector("td > div:nth-child(2) table table");
   const trs = innerTable.querySelectorAll("tr");
 
   const titleCell = trs.item(trs.length - 2).querySelector("td");
@@ -63,21 +67,21 @@ async function getFeaturedUpdate(table) {
 async function getFeaturedUpdates(doc) {
   const updates = [];
   const featuredTables = getFeaturedTables(doc);
-  for (let i = 0; i < featuredTables.length; i++) {
-    const res = await getFeaturedUpdate(featuredTables[i]);
+  for (let i = 1; i < featuredTables.length; i += 2) {
+    const res = await getFeaturedUpdate(featuredTables[i]).catch(handleError);
     updates.push(res);
   }
   return updates;
 }
 
 function getAdditionalTable(doc) {
-  const tables = getMainTables(doc);
-  return tables[tables.length - 4];
+  const tables = getMainTables(doc)
+  return tables[1];
 }
 
 async function getAdditionalUpdates(doc) {
   const updates = [];
-  const updateTables = getAdditionalTable(doc).querySelectorAll("table");
+  const updateTables = getAdditionalTable(doc).querySelector("table:nth-child(1)").querySelectorAll("table");
 
   let category;
   let title;
@@ -86,20 +90,44 @@ async function getAdditionalUpdates(doc) {
   for (let i = 0; i < updateTables.length; i++) {
     const table = updateTables[i];
     if (table.querySelector("a")) {
+      // body
+
+      const nodes = table.querySelector("td").childNodes
+      let content = "";
+      for (j = 0; j < nodes.length; j++) {
+        const type = nodes[j].constructor.name;
+        if (type === "Text") {
+          content += nodes[j].textContent;
+        } else if (type === "HTMLAnchorElement") {
+          if (nodes[j].textContent === "View here") continue;
+          const url = await getRedirectedURL(nodes[j].getAttribute("href"));
+          content += `[${nodes[j].textContent}](${url})`;
+        } else if (type === "Comment"){
+          continue
+        } else {
+          console.log(nodes[j]);
+          console.log(nodes[j].innerHTML);
+          throw "Unknown Element Type";
+        }
+      }
+
       const link = table.querySelector("a");
-      title = link.innerHTML.trim();
       url = await getRedirectedURL(link.getAttribute("href"));
+
+      updates.push({
+        category: category,
+        title: title,
+        url: url,
+        description: content,
+      });
     } else {
-      if (title) {
-        updates.push({
-          category: category,
-          title: title,
-          url: url,
-          description: table.querySelector("td").innerHTML.trim(),
-        });
-        title = null;
+      const content = table.querySelector("td").innerHTML.trim();
+      if (content.indexOf(".") >= 0) {
+        // title
+        title = content;
       } else {
-        category = table.querySelector("td").innerHTML.trim();
+        // category
+        category = content;
       }
     }
   }
@@ -107,35 +135,41 @@ async function getAdditionalUpdates(doc) {
 }
 
 async function main(err, mail) {
-  console.log(mail.subject);
-  console.log();
+  try {
+    console.log(mail.subject);
+    console.log();
 
-  const dom = new JSDOM(mail.html);
-  const doc = dom.window.document;
+    const dom = new JSDOM(mail.html);
+    const doc = dom.window.document;
 
-  const updates = {};
+    const updates = {};
 
-  const featuredUpdates = await getFeaturedUpdates(doc);
+    const featuredUpdates = await getFeaturedUpdates(doc);
 
-  let category = featuredUpdates[0].category;
-  featuredUpdates.forEach(u => {
-    category = u.category || category;
-    if(!updates[category]) updates[category] = [];
-    updates[category].push(u);
-  });
+    if (featuredUpdates.length > 0) {
+      let category = featuredUpdates[0].category;
+      featuredUpdates.forEach(u => {
+        category = u.category || category;
+        if(!updates[category]) updates[category] = [];
+        updates[category].push(u);
+      });
+    }
 
-  const additionalUpdates = await getAdditionalUpdates(doc);
-  additionalUpdates.forEach(u => {
-    if(!updates[u.category]) updates[u.category] = [];
-    updates[u.category].push(u);
-  });
-
-  for (let category in updates) {
-    console.log(`# ${category}\n`);
-    updates[category].forEach(u => {
-      console.log(`## [${u.title}](${u.url})\n`)
-      console.log(`> ${u.description}\n`)
+    const additionalUpdates = await getAdditionalUpdates(doc).catch(handleError);
+    additionalUpdates.forEach(u => {
+      if(!updates[u.category]) updates[u.category] = [];
+      updates[u.category].push(u);
     });
+
+    for (let category in updates) {
+      console.log(`# ${category}\n`);
+      updates[category].forEach(u => {
+        console.log(`## [${u.title}](${u.url})\n`)
+        console.log(`> ${u.description}\n`)
+      });
+    }
+  } catch (err) {
+    handleError(err)
   }
 }
 
