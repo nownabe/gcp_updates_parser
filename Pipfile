@@ -7,9 +7,11 @@ verify_ssl = true
 
 [packages]
 beautifulsoup4 = "*"
+ipython = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
 start = "python main.py"
+python = "python"
