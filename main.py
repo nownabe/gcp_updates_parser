@@ -116,7 +116,12 @@ def main():
 
     all_releases_tables = all_releases_container.find("td").findChildren("table", recursive=False)
 
-    releases = all_releases_tables[0:len(all_releases_tables)-4]
+    releases = []
+    additional_releases_idx = 0
+    if len(all_releases_tables) > 3:
+        releases = all_releases_tables[0:len(all_releases_tables)-4]
+        additional_releases_idx = 1
+
     additional_releases_table = all_releases_tables[len(all_releases_tables)-3]
 
     category = None
@@ -129,7 +134,7 @@ def main():
 
     category = None
     title = None
-    for table in additional_releases_table.findChildren("tr", recursive=False)[1].find("td").findChildren("table", recursive=False):
+    for table in additional_releases_table.findChildren("tr", recursive=False)[additional_releases_idx].find("td").findChildren("table", recursive=False):
         td = table.find("td")
         if not td.string is None and td.string.upper() == td.string:
             category = td.string
