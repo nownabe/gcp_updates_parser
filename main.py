@@ -1,4 +1,5 @@
 import re
+import sys
 from email.parser import Parser
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
@@ -80,7 +81,7 @@ class Updates:
 def main():
     updates = Updates()
 
-    with open("example.mail") as f:
+    with open(sys.argv[1]) as f:
         mail = Parser().parse(f)
 
     updates.set_title(mail.get("Subject"))
