@@ -1,3 +1,4 @@
+import quopri
 import re
 import sys
 from email.parser import Parser
@@ -94,10 +95,7 @@ def main():
     else:
         body = mail.get_payload()
 
-    body = body.replace("=20", "")
-    body = body.replace("=09", "")
-    body = body.replace("=\n", "")
-    body = body.replace('3D"', '"')
+    body = quopri.decodestring(body).decode("utf-8")
     body = re.sub(r'<!--.*?-->', "", body, flags=re.DOTALL)
 
     soup = BeautifulSoup(body, "html.parser")
