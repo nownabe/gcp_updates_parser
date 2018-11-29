@@ -59,7 +59,7 @@ class Updates:
         self.title = title
 
     def to_md(self):
-        s = ""
+        s = f"{self.title}\n\n"
         s += self._releases_to_md(self.releases)
         s += "\n---\n\nAdditional Releases\n\n"
         s += self._releases_to_md(self.additional_releases)
