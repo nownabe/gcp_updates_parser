@@ -96,7 +96,7 @@ def main():
     body = quopri.decodestring(body).decode("utf-8")
     body = re.sub(r'<!--.*?-->', "", body, flags=re.DOTALL)
 
-    soup = BeautifulSoup(body, "html.parser")
+    soup = BeautifulSoup(body, "lxml")
 
     outer_wrapper = soup.find("table")
     inner_wrapper = outer_wrapper.find("table")
