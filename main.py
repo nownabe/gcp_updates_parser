@@ -65,8 +65,6 @@ class Updates:
         s += self._releases_to_md(self.releases)
         s += "\n---\n\nAdditional Releases\n\n"
         s += self._releases_to_md(self.additional_releases)
-
-
         return s
 
     def _releases_to_md(self, releases):
