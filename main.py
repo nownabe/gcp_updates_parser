@@ -27,7 +27,7 @@ class Release:
             if isinstance(child, NavigableString):
                 content += child.string
             else:
-                if child.name == "a":
+                if child.name == "a" and child.has_attr("href"):
                     url = self._get_redirected_url(child["href"])
                     content += f"[{self._get_content(child)}]({url})"
                 else:
