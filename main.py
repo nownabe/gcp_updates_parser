@@ -101,36 +101,44 @@ def main():
     outer_wrapper = soup.find("table")
     inner_wrapper = outer_wrapper.find("table")
 
+    inner_content_tr = inner_wrapper.find_all("tr")[0]
+    # inner_footer_tr = inner_wrapper.find_all("tr")[1]
+
     # from 'GCP UPDATE' to 'Feedback' link
-    container = inner_wrapper.find("td").findChildren("table", recursive=False)[1]
+    content_container = inner_content_tr.find("td").findChildren("table", recursive=False)[1]
 
     # from 'GCP UPDATES' to 'See you in the cloud, The Google Cloud Platform Team'
-    content_wrapper = container.find("table")
+    # CSS class is 'content_wrapper'
+    content_wrapper = content_container.find("table")
 
-    # From releases to 'See you in the cloud, The Google Cloud Platform Team'
-    all_releases_container = content_wrapper.find("td").findChildren("table", recursive=False)[1]
+    # title, Key announcements and Additional releases
+    content_tables = content_wrapper.find("td").findChildren("table", recursive=False)
 
-    all_releases_tables = all_releases_container.find("td").findChildren("table", recursive=False)
 
-    releases = []
-    additional_releases_idx = 0
-    if len(all_releases_tables) > 3:
-        releases = all_releases_tables[0:len(all_releases_tables)-4]
-        additional_releases_idx = 1
+    # Extract key announcements
 
-    additional_releases_table = all_releases_tables[len(all_releases_tables)-3]
+    key_announcements_table = content_tables[1]
+    key_announcements = key_announcements_table.find("td").findChildren("table", recursive=False)[1].find("td").findChildren("table", recursive=False)
 
     category = None
-    for table in releases:
+    for table in key_announcements:
         if table.find("table"):
             release = table.find_all("table")[-1].find_all("td")
             updates.add_release(category, Release(release[0], release[1]))
         else:
             category = table.find("td").string
 
+
+    # Extract additional releases
+
+    additional_releases_wrapper = content_tables[2]
+    additional_releases_table = additional_releases_wrapper.find("td").findChildren("table", recursive=False)[0]
+    additional_releases_tr = additional_releases_table.findChildren("tr")[1]
+    additional_releases = additional_releases_tr.find("td").findChildren("table", recursive=False)
+
     category = None
     title = None
-    for table in additional_releases_table.findChildren("tr", recursive=False)[additional_releases_idx].find("td").findChildren("table", recursive=False):
+    for table in additional_releases:
         td = table.find("td")
         if not td.string is None and td.string.upper() == td.string:
             category = td.string
