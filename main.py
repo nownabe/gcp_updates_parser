@@ -77,6 +77,10 @@ class Updates:
         return s
 
 
+def grandchildren(element, child, grandchildren):
+    return element.find(child).findChildren(grandchildren, recursive=False)
+
+
 def main():
     updates = Updates()
 
@@ -105,20 +109,20 @@ def main():
     # inner_footer_tr = inner_wrapper.find_all("tr")[1]
 
     # from 'GCP UPDATE' to 'Feedback' link
-    content_container = inner_content_tr.find("td").findChildren("table", recursive=False)[1]
+    content_container = grandchildren(inner_content_tr, "td", "table")[1]
 
     # from 'GCP UPDATES' to 'See you in the cloud, The Google Cloud Platform Team'
     # CSS class is 'content_wrapper'
     content_wrapper = content_container.find("table")
 
     # title, Key announcements and Additional releases
-    content_tables = content_wrapper.find("td").findChildren("table", recursive=False)
+    content_tables = grandchildren(content_wrapper, "td", "table")
 
 
     # Extract key announcements
 
     key_announcements_table = content_tables[1]
-    key_announcements = key_announcements_table.find("td").findChildren("table", recursive=False)[1].find("td").findChildren("table", recursive=False)
+    key_announcements = grandchildren(grandchildren(key_announcements_table, "td", "table")[1], "td", "table")
 
     category = None
     for table in key_announcements:
@@ -132,9 +136,9 @@ def main():
     # Extract additional releases
 
     additional_releases_wrapper = content_tables[2]
-    additional_releases_table = additional_releases_wrapper.find("td").findChildren("table", recursive=False)[0]
+    additional_releases_table = grandchildren(additional_releases_wrapper, "td", "table")[0]
     additional_releases_tr = additional_releases_table.findChildren("tr")[1]
-    additional_releases = additional_releases_tr.find("td").findChildren("table", recursive=False)
+    additional_releases = grandchildren(additional_releases_tr, "td", "table")
 
     category = None
     title = None
