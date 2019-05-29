@@ -1,1 +1,5 @@
 *.txt
+*.md
+*.mail
+*.html
+!README.md
