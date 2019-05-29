@@ -8,6 +8,15 @@ from bs4.element import NavigableString
 
 from IPython import embed
 
+CATEGORIES = [
+    "AI & MACHINE LEARNING",
+    "API PLATFORM & ECOSYSTEMS",
+    "COMPUTE",
+    "HYBRID & MULTI-CLOUD",
+    "IDENTITY & SECURITY",
+    "MOBILE APP DEVELOPMENT",
+]
+
 
 class Release:
     def __init__(self, title, body_tag):
@@ -44,18 +53,12 @@ class Updates:
     def __init__(self):
         self.title = None
         self.releases = {}
-        self.additional_releases = {}
 
-    def add_release(self, category, release, additional=False):
+    def add_release(self, category, release):
         category = category.strip()
-        if additional:
-            if not category in self.additional_releases:
-                self.additional_releases[category] = []
-            self.additional_releases[category].append(release)
-        else:
-            if not category in self.releases:
-                self.releases[category] = []
-            self.releases[category].append(release)
+        if not category in self.releases:
+            self.releases[category] = []
+        self.releases[category].append(release)
 
     def set_title(self, title):
         self.title = title
@@ -63,8 +66,6 @@ class Updates:
     def to_md(self):
         s = f"{self.title}\n\n"
         s += self._releases_to_md(self.releases)
-        s += "\n---\n\nAdditional Releases\n\n"
-        s += self._releases_to_md(self.additional_releases)
         return s
 
     def _releases_to_md(self, releases):
@@ -108,50 +109,42 @@ def main():
     inner_content_tr = inner_wrapper.find_all("tr")[0]
     # inner_footer_tr = inner_wrapper.find_all("tr")[1]
 
-    # from 'GCP UPDATE' to 'Feedback' link
+    # from 'GCP UPDATE' to the bottom
     content_container = grandchildren(inner_content_tr, "td", "table")[1]
 
-    # from 'GCP UPDATES' to 'See you in the cloud, The Google Cloud Platform Team'
+    # from 'GCP UPDATES' to 'Feedback' link
     # CSS class is 'content_wrapper'
     content_wrapper = content_container.find("table")
 
-    # title, Key announcements and Additional releases
-    content_tables = grandchildren(content_wrapper, "td", "table")
+    # Main tables
+    # 0: Title (e.g. GCP UPDATES | MAY 28, 2019)
+    # 1: Updates, 'Go to your Console' button and 'See you' message.
+    # 2: GCP Launch Announcements Community
+    # 3: Footer (Documentation, Support, Mobila app and Feedback)
+    main_tables = grandchildren(content_wrapper, "td", "table")
 
+    # Content tables
+    # 0: Updates
+    # 1: 'Go to your Console' button
+    # 2: 'See you' message
+    content_tables = grandchildren(main_tables[1], "td", "table")
 
-    # Extract key announcements
+    # Update tables
+    update_tables = grandchildren(content_tables[0], "td", "table")
 
-    key_announcements_table = content_tables[1]
-    key_announcements = grandchildren(grandchildren(key_announcements_table, "td", "table")[1], "td", "table")
-
-    category = None
-    for table in key_announcements:
-        if table.find("table"):
-            release = table.find_all("table")[-1].find_all("td")
-            updates.add_release(category, Release(release[0], release[1]))
-        else:
-            category = table.find("td").string
-
-
-    # Extract additional releases
-
-    additional_releases_wrapper = content_tables[2]
-    additional_releases_table = grandchildren(additional_releases_wrapper, "td", "table")[0]
-    additional_releases_tr = additional_releases_table.findChildren("tr")[1]
-    additional_releases = grandchildren(additional_releases_tr, "td", "table")
+    # Extract updates
 
     category = None
     title = None
-    for table in additional_releases:
-        td = table.find("td")
-        if not td.string is None and td.string.upper() == td.string:
-            category = td.string
+    for table in update_tables:
+        content = table.find("td").string
+        if content in CATEGORIES:
+            category = content
         elif title is None:
-            title = td
+            title = content
         else:
-            updates.add_release(category, Release(title, table.find("td")), additional=True)
+            updates.add_release(category, Release(title, table.find("td")))
             title = None
-
 
     print(updates.to_md())
 
