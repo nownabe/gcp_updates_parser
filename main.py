@@ -10,6 +10,7 @@ from IPython import embed
 
 CATEGORIES = [
     "AI & MACHINE LEARNING",
+    "ANTHOS",
     "API PLATFORM & ECOSYSTEMS",
     "COMPUTE",
     "DATA ANALYTICS",
@@ -17,6 +18,7 @@ CATEGORIES = [
     "IDENTITY & SECURITY",
     "MANAGEMENT TOOLS",
     "MOBILE APP DEVELOPMENT",
+    "SECURITY",
     "STORAGE & DATABASES"
 ]
 
